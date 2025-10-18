@@ -5,19 +5,16 @@ use serde_derive::*;
 use toml;
 use lazy_static::lazy_static;
 
-extern crate clap;
-
-use clap::{Arg, App, SubCommand};
+use clap::{Arg, ArgMatches, Command};
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 
 /// Defines and parses CLI argument for this server.
-pub fn parse_cli_args<'a>() -> clap::ArgMatches<'a> {
-    clap::App::new("qaruntime-rs")
+pub fn parse_cli_args() -> ArgMatches {
+    Command::new("qaruntime-rs")
         .version(VERSION)
         .arg(
-            clap::Arg::with_name("config")
-                .required(false)
+            Arg::new("config")
                 .help("Path to configuration file")
                 .index(1),
         )
@@ -25,8 +22,8 @@ pub fn parse_cli_args<'a>() -> clap::ArgMatches<'a> {
 }
 
 /// Parses CLI arguments, finds location of config file, and parses config file into a struct.
-pub fn parse_config_from_cli_args(matches: &clap::ArgMatches) -> Config {
-    let conf = match matches.value_of("config") {
+pub fn parse_config_from_cli_args(matches: &ArgMatches) -> Config {
+    let conf = match matches.get_one::<String>("config").map(|s| s.as_str()) {
         Some(config_path) => match Config::from_file(config_path) {
             Ok(config) => config,
             Err(msg) => {
@@ -136,81 +133,103 @@ pub struct Common {
 
 
 pub fn new_config() -> Config {
-    let matches = App::new("QATrader")
+    let matches = Command::new("QATrader")
         .version("1.0")
         .author("junefar")
         .about("Does awesome things")
-        .arg(Arg::with_name("config")
-            .short("c")
-            .long("config")
-            .value_name("conf\\boot.toml")
-            .help("toml文件获取配置")
-            .takes_value(true))
-        .arg(Arg::with_name("account")
-            .long("account")
-            .value_name("")
-            .help("Set account name")
-            .takes_value(true))
-        .arg(Arg::with_name("password")
-            .long("password")
-            .value_name("")
-            .help("Set password")
-            .takes_value(true))
-        .arg(Arg::with_name("wsuri")
-            .long("wsuri")
-            .value_name("ws://localhost:7988")
-            .help("Set websocket uri")
-            .takes_value(true))
-        .arg(Arg::with_name("broker")
-            .long("broker")
-            .value_name("simnow")
-            .help("Set broker")
-            .takes_value(true))
-        .arg(Arg::with_name("eventmq_ip")
-            .long("eventmq_ip")
-            .value_name("amqp://admin:admin@192.168.2.125:5672/")
-            .help("接收发单MQ")
-            .takes_value(true))
-        .arg(Arg::with_name("database_ip")
-            .long("database_ip")
-            .value_name("mongodb://localhost:27017")
-            .help("QIFI 数据库")
-            .takes_value(true))
-        .arg(Arg::with_name("ping_gap")
-            .long("ping_gap")
-            .value_name("5")
-            .help("ping 间隔")
-            .takes_value(true))
-        .arg(Arg::with_name("taskid")
-            .long("taskid")
-            .value_name("")
-            .help("Set taskid")
-            .takes_value(true))
-        .arg(Arg::with_name("portfolio")
-            .long("portfolio")
-            .value_name("default")
-            .help("Set portfolio")
-            .takes_value(true))
-        .arg(Arg::with_name("bank_password")
-            .long("bank_password")
-            .value_name("")
-            .help("银行密码")
-            .takes_value(true))
-        .arg(Arg::with_name("capital_password")
-            .long("capital_password")
-            .value_name("")
-            .help("资金密码")
-            .takes_value(true))
-        .arg(Arg::with_name("appid")
-            .long("appid")
-            .value_name("")
-            .help("Set app id")
-            .takes_value(true))
-        .arg(Arg::with_name("log_level")
-            .long("log_level")
-            .value_name("info")
-            .help("日志等级[ debug / info / warn / error]")
-            .takes_value(true))
+        .arg(
+            Arg::new("config")
+                .short('c')
+                .long("config")
+                .value_name("conf\\boot.toml")
+                .help("toml文件获取配置")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("account")
+                .long("account")
+                .help("Set account name")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("password")
+                .long("password")
+                .help("Set password")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("wsuri")
+                .long("wsuri")
+                .value_name("ws://localhost:7988")
+                .help("Set websocket uri")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("broker")
+                .long("broker")
+                .value_name("simnow")
+                .help("Set broker")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("eventmq_ip")
+                .long("eventmq_ip")
+                .value_name("amqp://admin:admin@192.168.2.125:5672/")
+                .help("接收发单MQ")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("database_ip")
+                .long("database_ip")
+                .value_name("mongodb://localhost:27017")
+                .help("QIFI 数据库")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("ping_gap")
+                .long("ping_gap")
+                .value_name("5")
+                .help("ping 间隔")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("taskid")
+                .long("taskid")
+                .help("Set taskid")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("portfolio")
+                .long("portfolio")
+                .value_name("default")
+                .help("Set portfolio")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("bank_password")
+                .long("bank_password")
+                .help("银行密码")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("capital_password")
+                .long("capital_password")
+                .help("资金密码")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("appid")
+                .long("appid")
+                .help("Set app id")
+                .num_args(1),
+        )
+        .arg(
+            Arg::new("log_level")
+                .long("log_level")
+                .value_name("info")
+                .help("日志等级[ debug / info / warn / error]")
+                .num_args(1),
+        )
         .get_matches();
     let _args: Vec<String> = env::args().collect();
     if _args.len() <= 1{
@@ -218,7 +237,9 @@ pub fn new_config() -> Config {
         std::process::exit(0);
     }
     // Gets a value for config if supplied by user, or defaults to "default.conf"
-    if let Some(config_path) = matches.value_of("config") {
+    let get = |key: &str| matches.get_one::<String>(key).map(|s| s.as_str());
+
+    if let Some(config_path) = get("config") {
         match Config::from_file(config_path) {
             Ok(config) => config,
             Err(msg) => {
@@ -227,19 +248,25 @@ pub fn new_config() -> Config {
             }
         }
     } else {
-        let account = matches.value_of("account").unwrap_or("").to_string();
-        let password = matches.value_of("password").unwrap_or("").to_string();
-        let wsuri = matches.value_of("wsuri").unwrap_or("ws://localhost:7988").to_string();
-        let broker = matches.value_of("broker").unwrap_or("simnow").to_string();
-        let eventmq_ip = matches.value_of("eventmq_ip").unwrap_or("").to_string();
-        let database_ip = matches.value_of("database_ip").unwrap_or("").to_string();
-        let ping_gap = matches.value_of("ping_gap").unwrap_or("5").parse::<i32>().unwrap();
-        let taskid = matches.value_of("taskid").unwrap_or("").to_string();
-        let portfolio = matches.value_of("portfolio").unwrap_or("default").to_string();
-        let bank_password = matches.value_of("bank_password").unwrap_or("").to_string();
-        let capital_password = matches.value_of("capital_password").unwrap_or("").to_string();
-        let appid = matches.value_of("appid").unwrap_or("").to_string();
-        let log_level = matches.value_of("log_level").unwrap_or("info").to_string();
+        let account = get("account").unwrap_or("").to_string();
+        let password = get("password").unwrap_or("").to_string();
+        let wsuri = get("wsuri").unwrap_or("ws://localhost:7988").to_string();
+        let broker = get("broker").unwrap_or("simnow").to_string();
+        let eventmq_ip = get("eventmq_ip").unwrap_or("").to_string();
+        let database_ip = get("database_ip").unwrap_or("").to_string();
+        let ping_gap = get("ping_gap")
+            .unwrap_or("5")
+            .parse::<i32>()
+            .unwrap_or_else(|_| {
+                eprintln!("Invalid ping_gap value, expected integer");
+                std::process::exit(1);
+            });
+        let taskid = get("taskid").unwrap_or("").to_string();
+        let portfolio = get("portfolio").unwrap_or("default").to_string();
+        let bank_password = get("bank_password").unwrap_or("").to_string();
+        let capital_password = get("capital_password").unwrap_or("").to_string();
+        let appid = get("appid").unwrap_or("").to_string();
+        let log_level = get("log_level").unwrap_or("info").to_string();
         Config {
             common: Common {
                 account,
