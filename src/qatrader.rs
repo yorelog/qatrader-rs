@@ -7,7 +7,7 @@ use websocket::OwnedMessage;
 use crate::qaeventmq::MQPublish;
 use crate::xmsg::XReqQueryBank;
 use crate::scheduler::{Scheduler, OwnedMessageWrap};
-use crate::qamongo::{struct_to_doc, get_collection, update_qifi};
+use crate::qamongo::update_qifi;
 use actix::Addr;
 
 pub struct QATrader {
@@ -48,7 +48,7 @@ impl QATrader {
     pub fn rtn_data_handler(&mut self, data: &Value) {
         let account_cookie = self.qifi.account_cookie.clone();
         let new_message = data[&account_cookie].clone();
-        if let Some(s) = new_message.get("session") {
+        if new_message.get("session").is_some() {
             let trading_day = new_message["session"]["trading_day"].as_str().unwrap();
             self.qifi.trading_day = trading_day.to_string();
         }
@@ -141,7 +141,7 @@ impl QATrader {
     pub fn notify_handler(&mut self, data: &Value) {
         //  """{'N8': {'type': 'MESSAGE', 'level': 'INFO', 'code': 0, 'content': '登录成功'}"""
         let ni = data.as_object().unwrap();
-        for (k, v) in ni {
+        for v in ni.values() {
             let mess = v["content"].as_str().unwrap().to_string();
             self.qifi.event.insert(Local::now().format("%Y-%m-%d %H:%M:%S").to_string(), mess.clone());
             if mess.contains("修改密码成功") {} else if mess.contains("转账成功") {} else if mess.contains("这一时间段不能转账") {} else if mess.contains("银行账户余额不足") {} else if mess.contains("下单成功") {} else if mess.contains("撤单成功") {} else if mess.contains("用户登录失败") {

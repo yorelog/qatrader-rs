@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
-use log::{info, error, warn};
+use log::{info, error};
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Peek {

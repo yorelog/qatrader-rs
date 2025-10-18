@@ -1,7 +1,6 @@
-use websocket::{OwnedMessage, ClientBuilder, WebSocketError};
+use websocket::{OwnedMessage, WebSocketError};
 use std::thread;
-use log::{error, info, warn};
-use chrono::Local;
+use log::error;
 use actix::prelude::*;
 use websocket::sender::Writer;
 use std::net::TcpStream;
@@ -10,7 +9,6 @@ use crate::qawebsocket::QAWebSocket;
 use crate::config::CONFIG;
 use crate::qatrader::QATrader;
 use std::time::Duration;
-use std::sync::{Mutex, Arc};
 use crate::xmsg::XReqLogin;
 
 
@@ -33,7 +31,7 @@ impl Scheduler {
     }
 
     pub fn start_mq_loop(&mut self, addr: Addr<Scheduler>) {
-        let mq_loop = thread::spawn(move || {
+        thread::spawn(move || {
             let client = QAEventMQ {
                 amqp: CONFIG.common.eventmq_ip.clone(),
                 exchange: "QAORDER_ROUTER".to_string(),
@@ -47,7 +45,7 @@ impl Scheduler {
         let (sender, receiver) = QAWebSocket::connect(&CONFIG.common.wsuri)?;
         self.ws_sender = Some(sender);
 
-        let receive_loop = thread::spawn(move || {
+        thread::spawn(move || {
             QAWebSocket::receive_loop(receiver, addr)
         });
 
@@ -91,7 +89,7 @@ impl Actor for Scheduler {
             std::process::exit(1);
         }
 
-        ctx.run_interval(Duration::from_secs(CONFIG.common.ping_gap as u64), |act, ctx| {
+        ctx.run_interval(Duration::from_secs(CONFIG.common.ping_gap as u64), |act, _ctx| {
             act.ping();
         });
     }
@@ -108,7 +106,7 @@ impl Handler<WSReStart> for Scheduler {
         self.ws_sender = None;
         if let Err(e) = self.start_ws_receive_loop(ctx.address().clone()) {
             error!("{:?} , 3s later Try Reconnecting", e);
-            ctx.run_later(Duration::from_secs(3), |act, ctx| {
+            ctx.run_later(Duration::from_secs(3), |_act, ctx| {
                 ctx.address().do_send(WSReStart);
             });
         }
@@ -123,7 +121,7 @@ pub struct OwnedMessageWrap(pub OwnedMessage);
 
 impl Handler<OwnedMessageWrap> for Scheduler {
     type Result = ();
-    fn handle(&mut self, msg: OwnedMessageWrap, ctx: &mut Context<Self>) {
+    fn handle(&mut self, msg: OwnedMessageWrap, _ctx: &mut Context<Self>) {
         self.send_message(msg.0);
     }
 }
@@ -136,7 +134,7 @@ pub struct SyncMessage(pub String);
 
 impl Handler<SyncMessage> for Scheduler {
     type Result = ();
-    fn handle(&mut self, msg: SyncMessage, ctx: &mut Context<Self>) {
+    fn handle(&mut self, msg: SyncMessage, _ctx: &mut Context<Self>) {
         self.trader.parse(msg.0);
     }
 }
@@ -148,7 +146,7 @@ pub struct PongMessage;
 
 impl Handler<PongMessage> for Scheduler {
     type Result = ();
-    fn handle(&mut self, msg: PongMessage, ctx: &mut Context<Self>) {
+    fn handle(&mut self, _msg: PongMessage, _ctx: &mut Context<Self>) {
         self.trader.sync();
     }
 }

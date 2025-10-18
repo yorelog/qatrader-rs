@@ -34,5 +34,5 @@ pub fn init_log4(path: &str, level: &str) {
         .build(Root::builder().appender("stdout").appender("requests").build(lev))
         .unwrap();
 
-    let handle = log4rs::init_config(config).unwrap();
+    log4rs::init_config(config).unwrap();
 }

@@ -1,13 +1,9 @@
-use websocket::{OwnedMessage, Message, WebSocketError, ClientBuilder};
+use websocket::{OwnedMessage, WebSocketError, ClientBuilder};
 use websocket::receiver::Reader;
 use websocket::sender::Writer;
 use std::net::TcpStream;
-use serde_json::Value;
-use log::{warn, error, debug, info};
-use chrono::Local;
-use crate::msg::{parse_message, RtnData};
-use crate::xmsg::{XPeek, XReqLogin};
-use crate::config::CONFIG;
+use log::{error, info};
+use crate::msg::parse_message;
 use crate::scheduler::{Scheduler, OwnedMessageWrap, SyncMessage, WSReStart, PongMessage};
 use std::str::from_utf8;
 use actix::Addr;
@@ -81,7 +77,7 @@ impl QAWebSocket {
                     }
                 }
                 Err(e) => {
-                    error!("Receive WebSocket Error {:?}", error_count);
+                    error!("Receive WebSocket Error {:?}: {:?}", error_count, e);
                     if error_count >= 10 {
                         ws_send.do_send(WSReStart);
                         break;

@@ -1,4 +1,3 @@
-use serde_json::Value;
 use amiquip::{Connection, ConsumerMessage, ConsumerOptions, ExchangeDeclareOptions, ExchangeType, FieldTable, QueueDeclareOptions, Result, Publish, Channel};
 use log::{info, warn, error};
 use websocket::OwnedMessage;
